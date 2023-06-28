@@ -34,7 +34,7 @@ if(! -x $pdfsizeoptpath){
   $pdfsizeoptpath='/usr/bin/pdfsizeopt/pdfsizeopt';
 }
 if(! -x $pdfsizeoptpath){
-  $pdfsizeoptpath=`which pdfsizeopt`;
+  $pdfsizeoptpath=`where.exe pdfsizeopt`;
   $pdfsizeoptpath =~ s/\n//;
 }
 
@@ -108,16 +108,16 @@ if($options{'version'}){
 #Imagemagick commands differ by distro. This should pick them up.
 my $im_identify='identify-im6';
 my $im_convert='convert-im6';
-`which $im_identify`;
+`where.exe $im_identify`;
 if($?){$im_identify='identify'};
-`which $im_convert`;
+`where.exe $im_convert`;
 if($? && ("$^O" ne 'MSWin32')){$im_convert='convert'};
 my $sha256sum='sha256sum';
 
 if("$^O" eq 'MSWin32'){
   $sha256sum='rhash --sha256 -';
 }else{
-`which $sha256sum`;
+`where.exe $sha256sum`;
   if($?){
     $sha256sum='openssl dgst -sha256';
   }
@@ -178,7 +178,7 @@ sub depcheck($){
   if("$^O" eq 'MSWin32'){
     `where $totest.exe /Q`;
   }else{;
-    `which $totest`;
+    `where.exe $totest`;
   }
    if(! $?){
          print("Y $totest\n");
@@ -343,7 +343,7 @@ sub compressfile($%) {
     system('advdef', '-z4', $file);
   }
   if($ext eq 'swf'){
-    `which minuimus_swf_helper `;
+    `where.exe minuimus_swf_helper `;
     if( ! $?){
       testcommand('jpegoptim');
       system('minuimus_swf_helper', 'z', $file, $file);
@@ -1573,12 +1573,12 @@ sub pdfsizeopt(){
   $counter++;
   my @args=($pdfsizeoptpath, '--quiet');
   my $optimisers='--use-image-optimizer=optipng,advpng';
-  `which pngout`;
+  `where.exe pngout`;
   if(! $?) {$optimisers = $optimisers.",pngout";}
- `which imgdataopt`;
+ `where.exe imgdataopt`;
   if(! $?) {$optimisers = $optimisers.",imgdataopt";}
   if(!$no_jbig2){
-    `which jbig2`;
+    `where.exe jbig2`;
     if(! $?) {$optimisers = $optimisers.",jbig2";}
   }else{
     print("    Retrying pdfsizeopt without jbig2 and font optimisations (As these are the most likely to cause a crash).\n");
@@ -1860,7 +1860,7 @@ sub testcommand($){
     $totest=$totest.'.exe';
     `where $totest`
   }else{
-    `which $totest`;
+    `where.exe $totest`;
   }
    if(! $?){
     $testedcommands{$totest}=1;
@@ -2619,7 +2619,7 @@ sub testcommand_nonessential($){
     $totest=$totest.'.exe';
     `where $totest`;
   }else{
-    `which $totest`;
+    `where.exe $totest`;
   }
   if($?){
     print("Program $totest requsted but not available. This is an optional dependency. It is not required for minuimus, but functionality is reduced without it.\n");
