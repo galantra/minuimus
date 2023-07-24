@@ -3,7 +3,7 @@ import sys
 import subprocess
 import logging
 import multiprocessing
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
 from humanize import naturalsize
 
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     files = get_files_from_args(sys.argv[1:])
     total_original_size = 0
     total_compressed_size = 0
-    with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
+    with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
         futures = [executor.submit(process_file, file) for file in files]
         for future in tqdm(
             as_completed(futures), total=len(futures), desc="Processing files"
