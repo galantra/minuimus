@@ -21,6 +21,16 @@ def process_file(file):
         global total_original_size, total_compressed_size
         total_original_size += original_size
         total_compressed_size += compressed_size
+
+        # Get the creation time of the input file
+        input_creation_time = os.stat(file).st_ctime
+
+        # Get the path of the output file
+        output_file = f"{file}.min"
+
+        # Set the creation time of the output file to the same value as the input file
+        os.utime(output_file, (input_creation_time, input_creation_time))
+
     except subprocess.CalledProcessError as e:
         logging.exception(f"Error processing file: {file}. {e}")
     except Exception as e:
