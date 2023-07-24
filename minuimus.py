@@ -23,7 +23,9 @@ for root, dirs, filenames in os.walk(folder_path):
     for filename in filenames:
         # Only process files with certain extensions
         if filename.lower().endswith(
-            (".pdf", ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tif", ".tiff", ".webp")
+            (".pdf", ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tif", ".tiff", ".webp",
+            ".docx", ".pptx", ".xlsx", ".odt", ".ods", ".odp", ".epub", ".cbz", ".xps",
+            ".zip", ".7z", ".gz", ".tgz", ".cab", ".jar", ".woff", ".flac", ".swf", ".stl", ".mp3")
         ):
             file_path = os.path.join(root, filename)
             files.append(file_path)
