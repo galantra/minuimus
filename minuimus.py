@@ -14,7 +14,7 @@ folder_path = sys.argv[1]
 # Define an array to store the file paths
 files = []
 
-# Walk through the folder and its subdirectories to find all image files
+# Walk through the folder and its subdirectories
 for root, dirs, filenames in os.walk(folder_path):
     for filename in filenames:
         # Only process files with certain extensions
