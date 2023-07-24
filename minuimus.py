@@ -125,4 +125,6 @@ if __name__ == "__main__":
         saved_space_unit = "GB"
         total_saved_space /= 1073741824
 
-    print(f"\nProcessing complete! Total saved space: {total_saved_space:.2f} {saved_space_unit} ({percent_saved_space:.2f}%).")
+    print(
+        f"\nProcessing complete! Total saved space: {total_saved_space:.2f} {saved_space_unit} ({percent_saved_space:.2f}%)."
+    )
