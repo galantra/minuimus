@@ -8,7 +8,7 @@ from tqdm import tqdm
 from humanize import naturalsize
 import pickle
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.ERROR)
 
 total_original_size = 0
 total_compressed_size = 0
@@ -95,8 +95,7 @@ if __name__ == "__main__":
         processed_files = []
     with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
         futures = [
-            executor.submit(process_file, file, processed_files_file)
-            for file in files
+            executor.submit(process_file, file, processed_files_file) for file in files
         ]
         for future in tqdm(
             as_completed(futures), total=len(futures), desc="Processing files"
