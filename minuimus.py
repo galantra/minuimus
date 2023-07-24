@@ -18,7 +18,9 @@ files = []
 for root, dirs, filenames in os.walk(folder_path):
     for filename in filenames:
         # Only process files with certain extensions
-        if filename.lower().endswith(('.pdf', '.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tif', '.tiff', '.webp')):
+        if filename.lower().endswith(
+            (".pdf", ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tif", ".tiff", ".webp")
+        ):
             files.append(os.path.join(root, filename))
 
 
