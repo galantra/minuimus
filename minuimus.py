@@ -9,10 +9,6 @@ from humanize import naturalsize
 
 logging.basicConfig(level=logging.INFO)
 
-files = sys.argv[1:]
-total_original_size = 0
-total_compressed_size = 0
-
 def process_file(file):
     try:
         original_size = os.path.getsize(file)
@@ -47,6 +43,20 @@ def display_summary(files, total_original_size, total_compressed_size):
     print(f"Total saved space: {saved_space_str} ({percent_saved_space:.2f}% compression ratio)")
 
 if __name__ == '__main__':
+    files = []
+    for arg in sys.argv[1:]:
+        if os.path.isfile(arg):
+            files.append(arg)
+        elif os.path.isdir(arg):
+            for root, dirs, filenames in os.walk(arg):
+                for filename in filenames:
+                    files.append(os.path.join(root, filename))
+        else:
+            with open(arg) as f:
+                files.extend(f.read().splitlines())
+
+    total_original_size = 0
+    total_compressed_size = 0
     with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
         futures = [executor.submit(process_file, file) for file in files]
         for future in tqdm(as_completed(futures), total=len(futures), desc="Processing files"):
