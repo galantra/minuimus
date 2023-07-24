@@ -14,6 +14,10 @@ folder_path = sys.argv[1]
 # Define an array to store the file paths
 files = []
 
+# Define variables to store the total original size and compressed size
+total_original_size = 0
+total_compressed_size = 0
+
 # Walk through the folder and its subdirectories to find all image files
 for root, dirs, filenames in os.walk(folder_path):
     for filename in filenames:
@@ -21,8 +25,8 @@ for root, dirs, filenames in os.walk(folder_path):
         if filename.lower().endswith(
             (".pdf", ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tif", ".tiff", ".webp")
         ):
-            files.append(os.path.join(root, filename))
-
+            file_path = os.path.join(root, filename)
+            files.append(file_path)
 
 # Define a function to process a single file
 def process_file(file):
@@ -33,6 +37,9 @@ def process_file(file):
         file (str): The path to the file to be processed.
     """
     try:
+        # Get the original size of the file
+        original_size = os.path.getsize(file)
+
         # Create the startupinfo object to modify the process creation flags
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= (
@@ -49,6 +56,15 @@ def process_file(file):
             startupinfo=startupinfo,
             creationflags=subprocess.BELOW_NORMAL_PRIORITY_CLASS,
         )
+
+        # Get the compressed size of the file
+        compressed_size = os.path.getsize(file)
+
+        # Update the total original size and compressed size
+        global total_original_size, total_compressed_size
+        total_original_size += original_size
+        total_compressed_size += compressed_size
+
     except subprocess.CalledProcessError as e:
         print(f"Error processing file: {file}. {e}")
         # Handle the error here, if needed
@@ -67,14 +83,6 @@ def update_progress_bar(progress, total, bar_length=40):
 
 
 if __name__ == "__main__":
-    files = []
-    for folder in folders:
-        for root, dirs, files_list in os.walk(folder):
-            for filename in files_list:
-                if not filename.endswith(".mp3"):
-                    file_path = os.path.join(root, filename)
-                    files.append(file_path)
-
     TOTAL_FILES = len(files)
     with Pool(os.cpu_count()) as p:  # Use all available cores
         for i, _ in enumerate(p.imap_unordered(process_file, files), 1):
@@ -99,4 +107,6 @@ if __name__ == "__main__":
             with open("progress.pickle", "wb") as f:
                 pickle.dump(progress, f)
 
-    print("\nProcessing complete!")
+    # Calculate the total saved space
+    total_saved_space = total_original_size - total_compressed_size
+    print(f"\nProcessing complete! Total saved space: {total_saved_space} bytes.")
