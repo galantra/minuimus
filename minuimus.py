@@ -33,6 +33,32 @@ def process_file(file):
         logging.exception(f"Error processing file: {file}. {e}")
 
 
+def get_files_from_directory(directory):
+    files = []
+    for root, dirs, filenames in os.walk(directory):
+        for filename in filenames:
+            files.append(os.path.join(root, filename))
+    return files
+
+
+def get_files_from_filelist(filelist):
+    with open(filelist) as f:
+        files = f.read().splitlines()
+    return files
+
+
+def get_files_from_args(args):
+    files = []
+    for arg in args:
+        if os.path.isfile(arg):
+            files.append(arg)
+        elif os.path.isdir(arg):
+            files.extend(get_files_from_directory(arg))
+        else:
+            files.extend(get_files_from_filelist(arg))
+    return files
+
+
 def display_summary(files, total_original_size, total_compressed_size):
     num_files = len(files)
     total_saved_space = total_original_size - total_compressed_size
@@ -53,20 +79,7 @@ def display_summary(files, total_original_size, total_compressed_size):
 
 
 if __name__ == "__main__":
-    files = []
-    for arg in sys.argv[1:]:
-        if os.path.isfile(arg):
-            files.append(arg)
-        elif os.path.isdir(arg):
-            for root, dirs, filenames in os.walk(arg):
-                for filename in filenames:
-                    files.append(os.path.join(root, filename))
-        else:
-            with open(arg) as f:
-                # To use this version of the code, you can create a file containing a list of files separated by newlines, and then pipe the contents of the file to the script using the following command:
-                # cat filelist.txt | python minuimus.py
-                files.extend(f.read().splitlines())
-
+    files = get_files_from_args(sys.argv[1:])
     total_original_size = 0
     total_compressed_size = 0
     with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
