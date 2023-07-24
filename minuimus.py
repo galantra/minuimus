@@ -53,6 +53,8 @@ if __name__ == '__main__':
                     files.append(os.path.join(root, filename))
         else:
             with open(arg) as f:
+                # To use this version of the code, you can create a file containing a list of files separated by newlines, and then pipe the contents of the file to the script using the following command:
+                # cat filelist.txt | python minuimus.py
                 files.extend(f.read().splitlines())
 
     total_original_size = 0
