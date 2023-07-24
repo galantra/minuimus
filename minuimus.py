@@ -5,7 +5,7 @@ import pickle
 from multiprocessing import Pool, get_context
 from tqdm import tqdm
 
-# Define an array to store the folder paths
+# Define an array to store the folder pathsQA
 folders = []
 
 # Get the folder path from the command-line arguments
@@ -60,7 +60,7 @@ if __name__ == '__main__':
                     files.append(file_path)
 
     TOTAL_FILES = len(files)
-    with Pool(12) as p:
+    with Pool(os.cpu_count()) as p:  # Use all available cores
         for i, _ in enumerate(p.imap_unordered(process_file, files), 1):
             # Check if the user wants to pause
             if os.path.exists("pause.pickle"):
@@ -69,7 +69,7 @@ if __name__ == '__main__':
                 print("Script paused. Press 'Enter' to resume.")
                 input()
                 os.remove("pause.pickle")  # Remove the pause file
-                p = Pool(12)  # Create a new Pool
+                p = Pool(os.cpu_count())  # Resume the Pool
 
             progress_bar = update_progress_bar(i, TOTAL_FILES)
             print(f"\r{progress_bar}", end="")  # Update progress bar in-place
