@@ -67,14 +67,6 @@ def update_progress_bar(progress, total, bar_length=40):
     bar = "=" * filled_length + "-" * (bar_length - filled_length)
     return f"[{bar}] {int(percent * 100)}%"
 
-if __name__ == "__main__":
-    files = []
-    for folder in folders:
-        for root, dirs, files_list in os.walk(folder):
-            for filename in files_list:
-                file_path = os.path.join(root, filename)
-                files.append(file_path)
-
     TOTAL_FILES = len(files)
     with Pool(os.cpu_count()) as p:  # Use all available cores
         for i, _ in enumerate(p.imap_unordered(process_file, files), 1):
