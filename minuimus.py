@@ -22,8 +22,8 @@ for root, dirs, filenames in os.walk(folder_path):
         #     (".pdf", ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tif", ".tiff", ".webp",
         #     ".docx", ".pptx", ".xlsx", ".odt", ".ods", ".odp", ".epub", ".cbz", ".xps",
         #     ".zip", ".7z", ".gz", ".tgz", ".cab", ".jar", ".woff", ".flac", ".swf", ".stl", ".mp3")
-        # ):  
-            files.append(os.path.join(root, filename))
+        # ):
+        files.append(os.path.join(root, filename))
 
 
 # Define a function to process a single file
@@ -67,28 +67,29 @@ def update_progress_bar(progress, total, bar_length=40):
     bar = "=" * filled_length + "-" * (bar_length - filled_length)
     return f"[{bar}] {int(percent * 100)}%"
 
-    TOTAL_FILES = len(files)
-    with Pool(os.cpu_count()) as p:  # Use all available cores
-        for i, _ in enumerate(p.imap_unordered(process_file, files), 1):
-            # Check if the user wants to pause
-            if os.path.exists("pause.pickle"):
-                p.close()  # Pause the Pool
-                p.join()
-                print("Script paused. Press 'Enter' to resume.")
-                input()
-                os.remove("pause.pickle")  # Remove the pause file
-                p = Pool(os.cpu_count())  # Resume the Pool
 
-            progress_bar = update_progress_bar(i, TOTAL_FILES)
-            print(f"\r{progress_bar}", end="")  # Update progress bar in-place
+TOTAL_FILES = len(files)
+with Pool(os.cpu_count()) as p:  # Use all available cores
+    for i, _ in enumerate(p.imap_unordered(process_file, files), 1):
+        # Check if the user wants to pause
+        if os.path.exists("pause.pickle"):
+            p.close()  # Pause the Pool
+            p.join()
+            print("Script paused. Press 'Enter' to resume.")
+            input()
+            os.remove("pause.pickle")  # Remove the pause file
+            p = Pool(os.cpu_count())  # Resume the Pool
 
-            # Save the progress
-            progress = {
-                "files": files,
-                "total_files": TOTAL_FILES,
-                "current_file_index": i,
-            }
-            with open("progress.pickle", "wb") as f:
-                pickle.dump(progress, f)
+        progress_bar = update_progress_bar(i, TOTAL_FILES)
+        print(f"\r{progress_bar}", end="")  # Update progress bar in-place
 
-    print("\nProcessing complete!")
+        # Save the progress
+        progress = {
+            "files": files,
+            "total_files": TOTAL_FILES,
+            "current_file_index": i,
+        }
+        with open("progress.pickle", "wb") as f:
+            pickle.dump(progress, f)
+
+print("\nProcessing complete!")
