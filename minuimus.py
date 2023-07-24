@@ -17,8 +17,8 @@ files = []
 # Walk through the folder and its subdirectories to find all image files
 for root, dirs, filenames in os.walk(folder_path):
     for filename in filenames:
-        # Only process files with an image extension
-        if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tif', '.tiff', '.webp')):
+        # Only process files with certain extensions
+        if filename.lower().endswith(('.pdf', '.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tif', '.tiff', '.webp')):
             files.append(os.path.join(root, filename))
 
 
