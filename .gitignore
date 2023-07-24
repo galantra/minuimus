@@ -2,3 +2,4 @@
 *.pickle
 progress.db
 progress.pickle
+filelist.txt
