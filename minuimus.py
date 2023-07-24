@@ -1,22 +1,20 @@
 import sys
-import os
 import subprocess
-from multiprocessing import Pool
+import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
+from pathlib import Path
 
-folders = []
-folder_path = sys.argv[1]
-files = []
+logging.basicConfig(level=logging.INFO)
+
+folder_path = Path(sys.argv[1])
+files = list(folder_path.glob('**/*.*'))
 total_original_size = 0
 total_compressed_size = 0
 
-for root, dirs, filenames in os.walk(folder_path):
-    for filename in filenames:
-        files.append(os.path.join(root, filename))
-
 def process_file(file):
     try:
-        original_size = os.path.getsize(file)
+        original_size = file.stat().st_size
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= (
             subprocess.STARTF_USESHOWWINDOW
@@ -25,23 +23,24 @@ def process_file(file):
             subprocess.CREATE_NEW_CONSOLE
         )
         subprocess.run(
-            ["perl", "minuimus.pl", file],
+            ["perl", "minuimus.pl", str(file)],
             check=True,
             startupinfo=startupinfo,
             creationflags=subprocess.BELOW_NORMAL_PRIORITY_CLASS,
         )
-        compressed_size = os.path.getsize(file)
+        compressed_size = file.stat().st_size
         global total_original_size, total_compressed_size
         total_original_size += original_size
         total_compressed_size += compressed_size
     except subprocess.CalledProcessError as e:
-        print(f"Error processing file: {file}. {e}")
+        logging.error(f"Error processing file: {file}. {e}")
+    except Exception as e:
+        logging.error(f"Error processing file: {file}. {e}")
 
-for file in tqdm(files, desc="Processing files"):
-    process_file(file)
-
-with Pool(os.cpu_count()) as p:
-    p.map(process_file, files)
+with ThreadPoolExecutor() as executor:
+    futures = [executor.submit(process_file, file) for file in files]
+    for future in tqdm(as_completed(futures), total=len(futures), desc="Processing files"):
+        pass
 
 total_saved_space = total_original_size - total_compressed_size
 percent_saved_space = (total_saved_space / total_original_size) * 100
@@ -56,6 +55,6 @@ elif total_saved_space < 1073741824:
 else:
     saved_space_unit = "GB"
     total_saved_space /= 1073741824
-print(
+logging.info(
     f"\nProcessing complete! Total saved space: {total_saved_space:.2f} {saved_space_unit} ({percent_saved_space:.2f}%)."
 )
