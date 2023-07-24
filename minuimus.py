@@ -10,12 +10,7 @@ import pickle
 
 logging.basicConfig(level=logging.ERROR)
 
-total_original_size = 0
-total_compressed_size = 0
-
-
-def process_file(file, processed_files_file):
-    global total_original_size, total_compressed_size
+def process_file(file, processed_files_file, total_original_size, total_compressed_size):
     try:
         with open(processed_files_file, "rb") as f:
             processed_files = pickle.load(f)
@@ -29,8 +24,8 @@ def process_file(file, processed_files_file):
             # creationflags=subprocess.BELOW_NORMAL_PRIORITY_CLASS,
         )
         compressed_size = os.path.getsize(file)
-        total_original_size += original_size
-        total_compressed_size += compressed_size
+        total_original_size.value += original_size
+        total_compressed_size.value += compressed_size
         processed_files.append(file)
         with open(processed_files_file, "wb") as f:
             pickle.dump(processed_files, f)
@@ -39,7 +34,6 @@ def process_file(file, processed_files_file):
     except Exception as e:
         logging.exception(f"Error processing file: {file}. {e}")
 
-
 def get_files_from_directory(directory):
     files = []
     for root, dirs, filenames in os.walk(directory):
@@ -47,12 +41,10 @@ def get_files_from_directory(directory):
             files.append(os.path.join(root, filename))
     return files
 
-
 def get_files_from_filelist(filelist):
     with open(filelist) as f:
         files = f.read().splitlines()
     return files
-
 
 def get_files_from_args(args):
     files = []
@@ -65,17 +57,16 @@ def get_files_from_args(args):
             files.extend(get_files_from_filelist(arg))
     return files
 
-
 def display_summary(files, total_original_size, total_compressed_size):
     num_files = len(files)
-    total_saved_space = total_original_size - total_compressed_size
-    if total_original_size == 0:
+    total_saved_space = total_original_size.value - total_compressed_size.value
+    if total_original_size.value == 0:
         percent_saved_space = 0
     else:
-        percent_saved_space = (total_saved_space / total_original_size) * 100
+        percent_saved_space = (total_saved_space / total_original_size.value) * 100
     saved_space_str = naturalsize(total_saved_space)
-    original_size_str = naturalsize(total_original_size)
-    compressed_size_str = naturalsize(total_compressed_size)
+    original_size_str = naturalsize(total_original_size.value)
+    compressed_size_str = naturalsize(total_compressed_size.value)
     print(f"\nCompression summary:")
     print(f"Number of files compressed: {num_files}")
     print(f"Total original size: {original_size_str}")
@@ -83,7 +74,6 @@ def display_summary(files, total_original_size, total_compressed_size):
     print(
         f"Total saved space: {saved_space_str} ({percent_saved_space:.2f}% compression ratio)"
     )
-
 
 if __name__ == "__main__":
     files = get_files_from_args(sys.argv[1:])
@@ -93,9 +83,11 @@ if __name__ == "__main__":
             processed_files = pickle.load(f)
     else:
         processed_files = []
+    total_original_size = multiprocessing.Manager().Value('i', 0)
+    total_compressed_size = multiprocessing.Manager().Value('i', 0)
     with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
         futures = [
-            executor.submit(process_file, file, processed_files_file) for file in files
+            executor.submit(process_file, file, processed_files_file, total_original_size, total_compressed_size) for file in files
         ]
         for future in tqdm(
             as_completed(futures), total=len(futures), desc="Processing files"
