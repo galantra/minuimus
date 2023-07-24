@@ -9,8 +9,7 @@ from humanize import naturalsize
 
 logging.basicConfig(level=logging.INFO)
 
-folder_path = sys.argv[1]
-files = [entry.path for entry in os.scandir(folder_path) if entry.is_file()]
+files = sys.argv[1:]
 total_original_size = 0
 total_compressed_size = 0
 
