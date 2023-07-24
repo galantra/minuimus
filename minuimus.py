@@ -6,12 +6,22 @@ import multiprocessing
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
 from humanize import naturalsize
+import pickle
 
 logging.basicConfig(level=logging.INFO)
 
+total_original_size = 0
+total_compressed_size = 0
 
-def process_file(file):
+
+def process_file(file, processed_files_file):
+    global total_original_size, total_compressed_size
     try:
+        with open(processed_files_file, "rb") as f:
+            processed_files = pickle.load(f)
+        if file in processed_files:
+            logging.info(f"Skipping file: {file}. Already processed.")
+            return
         original_size = os.path.getsize(file)
         subprocess.run(
             ["perl", "minuimus.pl", file],
@@ -19,9 +29,11 @@ def process_file(file):
             # creationflags=subprocess.BELOW_NORMAL_PRIORITY_CLASS,
         )
         compressed_size = os.path.getsize(file)
-        global total_original_size, total_compressed_size
         total_original_size += original_size
         total_compressed_size += compressed_size
+        processed_files.append(file)
+        with open(processed_files_file, "wb") as f:
+            pickle.dump(processed_files, f)
     except subprocess.CalledProcessError as e:
         logging.exception(f"Error processing file: {file}. {e}")
     except Exception as e:
@@ -75,13 +87,23 @@ def display_summary(files, total_original_size, total_compressed_size):
 
 if __name__ == "__main__":
     files = get_files_from_args(sys.argv[1:])
-    total_original_size = 0
-    total_compressed_size = 0
+    processed_files_file = "processed_files.pkl"
+    if os.path.exists(processed_files_file):
+        with open(processed_files_file, "rb") as f:
+            processed_files = pickle.load(f)
+    else:
+        processed_files = []
     with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
-        futures = [executor.submit(process_file, file) for file in files]
+        futures = [
+            executor.submit(process_file, file, processed_files_file)
+            for file in files
+        ]
         for future in tqdm(
             as_completed(futures), total=len(futures), desc="Processing files"
         ):
             pass
+
+    with open(processed_files_file, "wb") as f:
+        pickle.dump(processed_files, f)
 
     display_summary(files, total_original_size, total_compressed_size)
