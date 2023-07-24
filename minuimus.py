@@ -1,3 +1,4 @@
+import sys
 import os
 import subprocess
 import pickle
@@ -5,10 +6,20 @@ from multiprocessing import Pool, get_context
 from tqdm import tqdm
 
 # Define an array to store the folder paths
-folders = [
-    r"C:\Users\emanresu\Juris-M\storage"
-]
+folders = []
 
+# Get the folder path from the command-line arguments
+folder_path = sys.argv[1]
+
+# Define an array to store the file paths
+files = []
+
+# Walk through the folder and its subdirectories to find all files
+for root, dirs, filenames in os.walk(folder_path):
+    for filename in filenames:
+        files.append(os.path.join(root, filename))
+
+# Define a function to process a single file
 def process_file(file):
     """
     Process a file using the 'minuimus.pl' script with below normal priority.
@@ -28,6 +39,10 @@ def process_file(file):
     except subprocess.CalledProcessError as e:
         print(f"Error processing file: {file}. {e}")
         # Handle the error here, if needed
+
+# Process each file in the files list
+for file in tqdm(files, desc="Processing files"):
+    process_file(file)
 
 def update_progress_bar(progress, total, bar_length=40):
     percent = float(progress) / total
