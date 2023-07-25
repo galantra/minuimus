@@ -10,6 +10,7 @@ import pickle
 
 logging.basicConfig(level=logging.ERROR)
 
+
 class FileCompressor:
     def compress_file(self, file):
         try:
@@ -23,8 +24,11 @@ class FileCompressor:
         except Exception as e:
             logging.exception(f"Error compressing file: {file}. {e}")
 
+
 class FileProcessor:
-    def __init__(self, processed_files_file, total_original_size, total_compressed_size):
+    def __init__(
+        self, processed_files_file, total_original_size, total_compressed_size
+    ):
         self.processed_files_file = processed_files_file
         self.total_original_size = total_original_size
         self.total_compressed_size = total_compressed_size
@@ -48,6 +52,7 @@ class FileProcessor:
         except Exception as e:
             logging.exception(f"Error processing file: {file}. {e}")
 
+
 class DirectoryScanner:
     def get_files_from_directory(self, directory):
         files = []
@@ -56,11 +61,13 @@ class DirectoryScanner:
                 files.append(os.path.join(root, filename))
         return files
 
+
 class FileListReader:
     def get_files_from_filelist(self, filelist):
         with open(filelist) as f:
             files = f.read().splitlines()
         return files
+
 
 class CompressionSummary:
     def display_summary(self, files, total_original_size, total_compressed_size):
@@ -81,6 +88,7 @@ class CompressionSummary:
             f"Total saved space: {saved_space_str} ({percent_saved_space:.2f}% compression ratio)"
         )
 
+
 def main():
     files = []
     for arg in sys.argv[1:]:
@@ -100,15 +108,15 @@ def main():
     else:
         processed_files = []
 
-    total_original_size = multiprocessing.Manager().Value('i', 0)
-    total_compressed_size = multiprocessing.Manager().Value('i', 0)
+    total_original_size = multiprocessing.Manager().Value("i", 0)
+    total_compressed_size = multiprocessing.Manager().Value("i", 0)
 
-    file_processor = FileProcessor(processed_files_file, total_original_size, total_compressed_size)
+    file_processor = FileProcessor(
+        processed_files_file, total_original_size, total_compressed_size
+    )
 
     with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
-        futures = [
-            executor.submit(file_processor.process_file, file) for file in files
-        ]
+        futures = [executor.submit(file_processor.process_file, file) for file in files]
         for future in tqdm(
             as_completed(futures), total=len(futures), desc="Processing files"
         ):
@@ -118,7 +126,10 @@ def main():
         pickle.dump(processed_files, f)
 
     compression_summary = CompressionSummary()
-    compression_summary.display_summary(files, total_original_size, total_compressed_size)
+    compression_summary.display_summary(
+        files, total_original_size, total_compressed_size
+    )
+
 
 if __name__ == "__main__":
     main()
