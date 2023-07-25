@@ -10,7 +10,7 @@ import pickle
 import argparse
 
 logging.basicConfig(level=logging.ERROR)
-
+logger = logging.getLogger(__name__)
 
 class FileCompressor:
     def compress_file(self, file):
@@ -21,9 +21,9 @@ class FileCompressor:
                 creationflags=subprocess.BELOW_NORMAL_PRIORITY_CLASS,
             )
         except subprocess.CalledProcessError as e:
-            logging.exception(f"Error compressing file: {file}. {e}")
+            logger.exception(f"Error compressing file: {file}. {e}")
         except Exception as e:
-            logging.exception(f"Error compressing file: {file}. {e}")
+            logger.exception(f"Error compressing file: {file}. {e}")
 
 
 class FileProcessor:
@@ -40,7 +40,7 @@ class FileProcessor:
             with open(self.processed_files_file, "rb") as f:
                 processed_files = pickle.load(f)
             if file in processed_files:
-                logging.info(f"Skipping file: {file}. Already processed.")
+                logger.info(f"Skipping file: {file}. Already processed.")
                 return
             original_size = os.path.getsize(file)
             self.file_compressor.compress_file(file)
@@ -51,7 +51,7 @@ class FileProcessor:
             with open(self.processed_files_file, "wb") as f:
                 pickle.dump(processed_files, f)
         except Exception as e:
-            logging.exception(f"Error processing file: {file}. {e}")
+            logger.exception(f"Error processing file: {file}. {e}")
 
 
 class DirectoryScanner:
@@ -81,24 +81,24 @@ class CompressionSummary:
         saved_space_str = naturalsize(total_saved_space)
         original_size_str = naturalsize(total_original_size.value)
         compressed_size_str = naturalsize(total_compressed_size.value)
-        print(f"\nCompression summary:")
-        print(f"Number of files compressed: {num_files}")
-        print(f"Total original size: {original_size_str}")
-        print(f"Total compressed size: {compressed_size_str}")
-        print(
+        tqdm.write(f"\nCompression summary:")
+        tqdm.write(f"Number of files compressed: {num_files}")
+        tqdm.write(f"Total original size: {original_size_str}")
+        tqdm.write(f"Total compressed size: {compressed_size_str}")
+        tqdm.write(
             f"Total saved space: {saved_space_str} ({percent_saved_space:.2f}% compression ratio)"
         )
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Compress files using minuimus.pl')
+    parser = argparse.ArgumentParser(description='Compress files using minuimus.pl', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('files', metavar='FILE', nargs='*',
                         help='files or directories to compress')
     parser.add_argument('--filelist', '-f', metavar='FILE', nargs=1, default=None,
                         help='file containing list of files to compress')
     parser.add_argument('--processed-files-file', '-p', metavar='FILE',
                         default='processed_files.pkl',
-                        help='file to store list of processed files (default: processed_files.pkl)')
+                        help='file to store list of processed files')
     args = parser.parse_args()
 
     files = []
@@ -115,13 +115,15 @@ def main():
 
     if args.filelist:
         file_list_reader = FileListReader()
-        files.extend(file_list_reader.get_files_from_filelist(args.filelist[0]))
+        file_list = os.path.abspath(args.filelist[0])
+        if os.path.isfile(file_list):
+            files.extend(file_list_reader.get_files_from_filelist(file_list))
 
-    if os.path.exists(args.processed_files_file):
+    if not os.path.isfile(args.processed_files_file):
+        processed_files = []
+    else:
         with open(args.processed_files_file, "rb") as f:
             processed_files = pickle.load(f)
-    else:
-        processed_files = []
 
     total_original_size = multiprocessing.Manager().Value("i", 0)
     total_compressed_size = multiprocessing.Manager().Value("i", 0)
