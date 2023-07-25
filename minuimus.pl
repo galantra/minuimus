@@ -34,6 +34,9 @@ if(! -x $pdfsizeoptpath){
   $pdfsizeoptpath='/usr/bin/pdfsizeopt/pdfsizeopt';
 }
 if(! -x $pdfsizeoptpath){
+  $pdfsizeoptpath='C:\pdfsizeopt\pdfsizeopt.exe';
+}
+if(! -x $pdfsizeoptpath){
   $pdfsizeoptpath=`where.exe pdfsizeopt`;
   $pdfsizeoptpath =~ s/\n//;
 }
