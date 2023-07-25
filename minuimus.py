@@ -75,7 +75,7 @@ def display_summary(files, total_original_size, total_compressed_size):
         f"Total saved space: {saved_space_str} ({percent_saved_space:.2f}% compression ratio)"
     )
 
-if __name__ == "__main__":
+def main():
     files = get_files_from_args(sys.argv[1:])
     processed_files_file = "processed_files.pkl"
     if os.path.exists(processed_files_file):
@@ -98,3 +98,6 @@ if __name__ == "__main__":
         pickle.dump(processed_files, f)
 
     display_summary(files, total_original_size, total_compressed_size)
+
+if __name__ == "__main__":
+    main()
