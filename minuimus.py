@@ -7,6 +7,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
 from humanize import naturalsize
 import pickle
+import argparse
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -90,20 +91,34 @@ class CompressionSummary:
 
 
 def main():
-    files = []
-    for arg in sys.argv[1:]:
-        if os.path.isfile(arg):
-            files.append(arg)
-        elif os.path.isdir(arg):
-            directory_scanner = DirectoryScanner()
-            files.extend(directory_scanner.get_files_from_directory(arg))
-        else:
-            file_list_reader = FileListReader()
-            files.extend(file_list_reader.get_files_from_filelist(arg))
+    parser = argparse.ArgumentParser(description='Compress files using minuimus.pl')
+    parser.add_argument('files', metavar='FILE', nargs='*',
+                        help='files or directories to compress')
+    parser.add_argument('--filelist', '-f', metavar='FILE', nargs=1, default=None,
+                        help='file containing list of files to compress')
+    parser.add_argument('--processed-files-file', '-p', metavar='FILE',
+                        default='processed_files.pkl',
+                        help='file to store list of processed files (default: processed_files.pkl)')
+    args = parser.parse_args()
 
-    processed_files_file = "processed_files.pkl"
-    if os.path.exists(processed_files_file):
-        with open(processed_files_file, "rb") as f:
+    files = []
+    if args.files:
+        for arg in args.files:
+            if os.path.isfile(arg):
+                files.append(arg)
+            elif os.path.isdir(arg):
+                directory_scanner = DirectoryScanner()
+                files.extend(directory_scanner.get_files_from_directory(arg))
+            else:
+                file_list_reader = FileListReader()
+                files.extend(file_list_reader.get_files_from_filelist(arg))
+
+    if args.filelist:
+        file_list_reader = FileListReader()
+        files.extend(file_list_reader.get_files_from_filelist(args.filelist[0]))
+
+    if os.path.exists(args.processed_files_file):
+        with open(args.processed_files_file, "rb") as f:
             processed_files = pickle.load(f)
     else:
         processed_files = []
@@ -112,7 +127,7 @@ def main():
     total_compressed_size = multiprocessing.Manager().Value("i", 0)
 
     file_processor = FileProcessor(
-        processed_files_file, total_original_size, total_compressed_size
+        args.processed_files_file, total_original_size, total_compressed_size
     )
 
     with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
@@ -122,14 +137,13 @@ def main():
         ):
             pass
 
-    with open(processed_files_file, "wb") as f:
+    with open(args.processed_files_file, "wb") as f:
         pickle.dump(processed_files, f)
 
     compression_summary = CompressionSummary()
     compression_summary.display_summary(
         files, total_original_size, total_compressed_size
     )
-
 
 if __name__ == "__main__":
     main()
