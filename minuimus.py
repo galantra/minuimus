@@ -66,7 +66,14 @@ class DirectoryScanner:
 class FileListReader:
     def get_files_from_filelist(self, filelist):
         with open(filelist) as f:
-            files = f.read().splitlines()
+            lines = f.read().splitlines()
+        files = []
+        directory_scanner = DirectoryScanner()
+        for line in lines:
+            if os.path.isfile(line):
+                files.append(line)
+            elif os.path.isdir(line):
+                files.extend(directory_scanner.get_files_from_directory(line))
         return files
 
 
