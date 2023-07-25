@@ -21,7 +21,7 @@ def process_file(file, processed_files_file, total_original_size, total_compress
         subprocess.run(
             ["perl", "minuimus.pl", file],
             check=True,
-            # creationflags=subprocess.BELOW_NORMAL_PRIORITY_CLASS,
+            creationflags=subprocess.BELOW_NORMAL_PRIORITY_CLASS,
         )
         compressed_size = os.path.getsize(file)
         total_original_size.value += original_size
