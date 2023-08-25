@@ -4,3 +4,4 @@ progress.db
 progress.pickle
 filelist.txt
 processed_files.pkl
+output.txt
