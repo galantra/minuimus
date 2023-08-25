@@ -42,6 +42,8 @@ class FileCompressor:
             raise
         except Exception as e:
             logger.exception(f"Error compressing file: {file}. {e}")
+        else:
+            logger.info(f"File compressed successfully: {file}")
 
 
 class DirectoryScanner:
@@ -80,6 +82,7 @@ def get_files(args_files, file_list=None):
             files.extend(file_list_reader.get_files_from_filelist(arg))
     if file_list and os.path.isfile(file_list[0]):
         files.extend(file_list_reader.get_files_from_filelist(file_list[0]))
+    logger.info(f"Number of files to be compressed: {len(files)}")
     return files
 
 
@@ -96,6 +99,7 @@ class FileProcessor:
             if file in self.processed_files:
                 logger.info(f"Skipping file: {file}. Already processed.")
                 return
+            logger.info(f"Processing file: {file}")
             original_size = os.path.getsize(file)
             self.file_compressor.compress_file(file)
             compressed_size = os.path.getsize(file)
@@ -139,8 +143,7 @@ def main():
                         help='argument 1 to pass to minuimus.pl script')
     args = parser.parse_args()
 
-    logger = setup_logger(__name__, log_filename)
-    
+    logger.info(f"Getting files with arguments: {args.files}, {args.filelist}")
     files = get_files(args.files, args.filelist)
 
     if not os.path.isfile(args.processed_files_file):
@@ -154,6 +157,7 @@ def main():
 
     file_processor = FileProcessor(total_original_size, total_compressed_size, processed_files)
 
+    logger.info(f"Using {multiprocessing.cpu_count()} CPU cores for compression")
     with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
         futures = [executor.submit(file_processor.process_file, file) for file in files]
         for future in tqdm(
@@ -169,6 +173,10 @@ def main():
     compression_summary.display_summary(
         files, total_original_size, total_compressed_size
     )
+
+    logger.info(f"Number of files skipped: {len(files) - len(processed_files)}")
+    logger.info("Compression process has finished")
+    logger.info("Program has finished running")
 
 if __name__ == "__main__":
     main()
