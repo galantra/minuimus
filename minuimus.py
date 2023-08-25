@@ -17,15 +17,12 @@ from logging.handlers import RotatingFileHandler
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-# create a file handler and set its level to DEBUG
 file_handler = RotatingFileHandler('minuimus.log', maxBytes=1024*1024, backupCount=10)
 file_handler.setLevel(logging.DEBUG)
 
-# create a formatter and add it to the file handler
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
 
-# add the file handler to the logger
 logger.addHandler(file_handler)
 
 class FileCompressor:
