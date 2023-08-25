@@ -11,7 +11,22 @@ import pickle
 import argparse
 
 logging.basicConfig(level=logging.ERROR)
+import logging
+from logging.handlers import RotatingFileHandler
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# create a file handler and set its level to DEBUG
+file_handler = RotatingFileHandler('minuimus.log', maxBytes=1024*1024, backupCount=10)
+file_handler.setLevel(logging.DEBUG)
+
+# create a formatter and add it to the file handler
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# add the file handler to the logger
+logger.addHandler(file_handler)
 
 class FileCompressor:
     def compress_file(self, file):
@@ -99,11 +114,11 @@ class CompressionSummary:
         saved_space_str = naturalsize(total_saved_space)
         original_size_str = naturalsize(total_original_size.value)
         compressed_size_str = naturalsize(total_compressed_size.value)
-        tqdm.write(f"\nCompression summary:")
-        tqdm.write(f"Number of files compressed: {num_files}")
-        tqdm.write(f"Total original size: {original_size_str}")
-        tqdm.write(f"Total compressed size: {compressed_size_str}")
-        tqdm.write(
+        logger.info(f"\nCompression summary:")
+        logger.info(f"Number of files compressed: {num_files}")
+        logger.info(f"Total original size: {original_size_str}")
+        logger.info(f"Total compressed size: {compressed_size_str}")
+        logger.info(
             f"Total saved space: {saved_space_str} ({percent_saved_space:.2f}% compression ratio)"
         )
 
