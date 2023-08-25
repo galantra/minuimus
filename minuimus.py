@@ -26,34 +26,6 @@ class FileCompressor:
             logger.exception(f"Error compressing file: {file}. {e}")
 
 
-class FileProcessor:
-    def __init__(
-        self, processed_files_file, total_original_size, total_compressed_size
-    ):
-        self.processed_files_file = processed_files_file
-        self.total_original_size = total_original_size
-        self.total_compressed_size = total_compressed_size
-        self.file_compressor = FileCompressor()
-
-    def process_file(self, file):
-        try:
-            with open(self.processed_files_file, "rb") as f:
-                processed_files = pickle.load(f)
-            if file in processed_files:
-                logger.info(f"Skipping file: {file}. Already processed.")
-                return
-            original_size = os.path.getsize(file)
-            self.file_compressor.compress_file(file)
-            compressed_size = os.path.getsize(file)
-            self.total_original_size.value += original_size
-            self.total_compressed_size.value += compressed_size
-            processed_files.append(file)
-            with open(self.processed_files_file, "wb") as f:
-                pickle.dump(processed_files, f)
-        except Exception as e:
-            logger.exception(f"Error processing file: {file}. {e}")
-
-
 class DirectoryScanner:
     def get_files_from_directory(self, directory):
         files = []
@@ -75,6 +47,44 @@ class FileListReader:
             elif os.path.isdir(line):
                 files.extend(directory_scanner.get_files_from_directory(line))
         return files
+
+
+def get_files(args_files, file_list=None):
+    files = []
+    directory_scanner = DirectoryScanner()
+    file_list_reader = FileListReader()
+    for arg in args_files:
+        if os.path.isfile(arg):
+            files.append(arg)
+        elif os.path.isdir(arg):
+            files.extend(directory_scanner.get_files_from_directory(arg))
+        else:
+            files.extend(file_list_reader.get_files_from_filelist(arg))
+    if file_list:
+        if os.path.isfile(file_list):
+            files.extend(file_list_reader.get_files_from_filelist(file_list))
+    return files
+
+
+class FileProcessor:
+    def __init__(self, total_original_size, total_compressed_size):
+        self.total_original_size = total_original_size
+        self.total_compressed_size = total_compressed_size
+        self.file_compressor = FileCompressor()
+
+    def process_file(self, file, processed_files):
+        try:
+            if file in processed_files:
+                logger.info(f"Skipping file: {file}. Already processed.")
+                return
+            original_size = os.path.getsize(file)
+            self.file_compressor.compress_file(file)
+            compressed_size = os.path.getsize(file)
+            self.total_original_size.value += original_size
+            self.total_compressed_size.value += compressed_size
+            processed_files.add(file)
+        except Exception as e:
+            logger.exception(f"Error processing file: {file}. {e}")
 
 
 class CompressionSummary:
@@ -108,46 +118,28 @@ def main():
                         help='file to store list of processed files')
     args = parser.parse_args()
 
-    files = []
-    if args.files:
-        for arg in args.files:
-            if os.path.isfile(arg):
-                files.append(arg)
-            elif os.path.isdir(arg):
-                directory_scanner = DirectoryScanner()
-                files.extend(directory_scanner.get_files_from_directory(arg))
-            else:
-                file_list_reader = FileListReader()
-                files.extend(file_list_reader.get_files_from_filelist(arg))
-
-    if args.filelist:
-        file_list_reader = FileListReader()
-        file_list = os.path.abspath(args.filelist[0])
-        if os.path.isfile(file_list):
-            files.extend(file_list_reader.get_files_from_filelist(file_list))
+    files = get_files(args.files, args.filelist)
 
     if not os.path.isfile(args.processed_files_file):
-        processed_files = []
+        processed_files = set()
     else:
         with open(args.processed_files_file, "rb") as f:
-            processed_files = pickle.load(f)
+            processed_files = set(pickle.load(f))
 
     total_original_size = multiprocessing.Manager().Value("i", 0)
     total_compressed_size = multiprocessing.Manager().Value("i", 0)
 
-    file_processor = FileProcessor(
-        args.processed_files_file, total_original_size, total_compressed_size
-    )
+    file_processor = FileProcessor(total_original_size, total_compressed_size)
 
     with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
-        futures = [executor.submit(file_processor.process_file, file) for file in files]
+        futures = [executor.submit(file_processor.process_file, file, processed_files) for file in files]
         for future in tqdm(
             as_completed(futures), total=len(futures), desc="Processing files"
         ):
             pass
 
     with open(args.processed_files_file, "wb") as f:
-        pickle.dump(processed_files, f)
+        pickle.dump(list(processed_files), f)
 
     compression_summary = CompressionSummary()
     compression_summary.display_summary(
