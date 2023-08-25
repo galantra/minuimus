@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-file_handler = RotatingFileHandler('minuimus.log', maxBytes=1024*1024, backupCount=10)
+file_handler = RotatingFileHandler('minuimus.log', maxBytes=1024*1024, backupCount=50)
 file_handler.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -85,14 +85,15 @@ def get_files(args_files, file_list=None):
 
 
 class FileProcessor:
-    def __init__(self, total_original_size, total_compressed_size):
+    def __init__(self, total_original_size, total_compressed_size, processed_files):
         self.total_original_size = total_original_size
         self.total_compressed_size = total_compressed_size
         self.file_compressor = FileCompressor()
+        self.processed_files = processed_files
 
-    def process_file(self, file, processed_files):
+    def process_file(self, file):
         try:
-            if file in processed_files:
+            if file in self.processed_files:
                 logger.info(f"Skipping file: {file}. Already processed.")
                 return
             original_size = os.path.getsize(file)
@@ -100,9 +101,10 @@ class FileProcessor:
             compressed_size = os.path.getsize(file)
             self.total_original_size.value += original_size
             self.total_compressed_size.value += compressed_size
-            processed_files.add(file)
+            self.processed_files.add(file)
         except Exception as e:
             logger.exception(f"Error processing file: {file}. {e}")
+
 
 
 class CompressionSummary:
@@ -147,10 +149,10 @@ def main():
     total_original_size = multiprocessing.Manager().Value("i", 0)
     total_compressed_size = multiprocessing.Manager().Value("i", 0)
 
-    file_processor = FileProcessor(total_original_size, total_compressed_size)
+    file_processor = FileProcessor(total_original_size, total_compressed_size, processed_files)
 
     with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
-        futures = [executor.submit(file_processor.process_file, file, processed_files) for file in files]
+        futures = [executor.submit(file_processor.process_file, file) for file in files]
         for future in tqdm(
             as_completed(futures), total=len(futures), desc="Processing files"
         ):
