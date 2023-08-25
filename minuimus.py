@@ -9,10 +9,10 @@ from tqdm import tqdm
 from humanize import naturalsize
 import pickle
 import argparse
-
-logging.basicConfig(level=logging.ERROR)
 import logging
 from logging.handlers import RotatingFileHandler
+
+logging.basicConfig(level=logging.ERROR)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -35,8 +35,13 @@ class FileCompressor:
             )
         except subprocess.CalledProcessError as e:
             logger.exception(f"Error compressing file: {file}. {e}")
+            raise
+        except FileNotFoundError as e:
+            logger.exception(f"minuimus.pl not found. {e}")
+            raise
         except Exception as e:
             logger.exception(f"Error compressing file: {file}. {e}")
+            raise
 
 
 class DirectoryScanner:
