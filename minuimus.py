@@ -78,10 +78,10 @@ def get_files(args_files, file_list=None):
             files.extend(directory_scanner.get_files_from_directory(arg))
         else:
             files.extend(file_list_reader.get_files_from_filelist(arg))
-    if file_list:
-        if os.path.isfile(file_list):
-            files.extend(file_list_reader.get_files_from_filelist(file_list))
+    if file_list and os.path.isfile(file_list[0]):
+        files.extend(file_list_reader.get_files_from_filelist(file_list[0]))
     return files
+
 
 
 class FileProcessor:
@@ -135,6 +135,8 @@ def main():
     parser.add_argument('--processed-files-file', '-p', metavar='FILE',
                         default='processed_files.pkl',
                         help='file to store list of processed files')
+    parser.add_argument('--arg1', metavar='ARG1', default=None,
+                        help='argument 1 to pass to minuimus.pl script')
     args = parser.parse_args()
 
     logger = setup_logger(__name__, log_filename)
