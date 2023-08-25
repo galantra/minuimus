@@ -10,20 +10,21 @@ from humanize import naturalsize
 import pickle
 import argparse
 import logging
-from logging.handlers import RotatingFileHandler
+import datetime
 
-logging.basicConfig(level=logging.ERROR)
+def setup_logger(name, log_file, level=logging.DEBUG):
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(level)
+    file_handler.setFormatter(formatter)
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(file_handler)
+    return logger
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-file_handler = RotatingFileHandler('minuimus.log', maxBytes=1024*1024, backupCount=50)
-file_handler.setLevel(logging.DEBUG)
-
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
-
-logger.addHandler(file_handler)
+current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+log_filename = f"minuimus_{current_time}.log"
+logger = setup_logger(__name__, log_filename)
 
 class FileCompressor:
     def compress_file(self, file):
@@ -41,7 +42,6 @@ class FileCompressor:
             raise
         except Exception as e:
             logger.exception(f"Error compressing file: {file}. {e}")
-            raise
 
 
 class DirectoryScanner:
@@ -106,7 +106,6 @@ class FileProcessor:
             logger.exception(f"Error processing file: {file}. {e}")
 
 
-
 class CompressionSummary:
     def display_summary(self, files, total_original_size, total_compressed_size):
         num_files = len(files)
@@ -138,6 +137,8 @@ def main():
                         help='file to store list of processed files')
     args = parser.parse_args()
 
+    logger = setup_logger(__name__, log_filename)
+    
     files = get_files(args.files, args.filelist)
 
     if not os.path.isfile(args.processed_files_file):
