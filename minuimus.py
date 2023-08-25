@@ -1,3 +1,4 @@
+import contextlib
 import os
 import sys
 import subprocess
@@ -139,7 +140,8 @@ def main():
             pass
 
     with open(args.processed_files_file, "wb") as f:
-        pickle.dump(list(processed_files), f)
+        with contextlib.closing(f):
+            pickle.dump(list(processed_files), f)
 
     compression_summary = CompressionSummary()
     compression_summary.display_summary(
