@@ -12,8 +12,11 @@ import argparse
 import logging
 import datetime
 
+
 def setup_logger(log_file, level=logging.DEBUG):
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     file_handler = logging.FileHandler(log_file)
     file_handler.setLevel(level)
     file_handler.setFormatter(formatter)
@@ -22,9 +25,11 @@ def setup_logger(log_file, level=logging.DEBUG):
     logger.addHandler(file_handler)
     return logger
 
+
 current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 log_filename = f"minuimus_{current_time}.log"
 logger = setup_logger(log_filename)
+
 
 class FileCompressor:
     def compress_file(self, file):
@@ -86,9 +91,14 @@ def get_files(args_files, file_list=None):
     return files
 
 
-
 class FileProcessor:
-    def __init__(self, total_original_size, total_compressed_size, processed_files, processed_files_file):
+    def __init__(
+        self,
+        total_original_size,
+        total_compressed_size,
+        processed_files,
+        processed_files_file,
+    ):
         self.total_original_size = total_original_size
         self.total_compressed_size = total_compressed_size
         self.file_compressor = FileCompressor()
@@ -135,16 +145,34 @@ class CompressionSummary:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Compress files using minuimus.pl', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('files', metavar='FILE', nargs='*',
-                        help='files or directories to compress')
-    parser.add_argument('--filelist', '-f', metavar='FILE', nargs=1, default=None,
-                        help='file containing list of files to compress')
-    parser.add_argument('--processed-files-file', '-p', metavar='FILE',
-                        default='processed_files.pkl',
-                        help='file to store list of processed files')
-    parser.add_argument('--script-args', metavar='SCRIPT_ARGS', default=None,
-                        help='additional arguments to pass to minuimus.pl script')
+    parser = argparse.ArgumentParser(
+        description="Compress files using minuimus.pl",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "files", metavar="FILE", nargs="*", help="files or directories to compress"
+    )
+    parser.add_argument(
+        "--filelist",
+        "-f",
+        metavar="FILE",
+        nargs=1,
+        default=None,
+        help="file containing list of files to compress",
+    )
+    parser.add_argument(
+        "--processed-files-file",
+        "-p",
+        metavar="FILE",
+        default="processed_files.pkl",
+        help="file to store list of processed files",
+    )
+    parser.add_argument(
+        "--script-args",
+        metavar="SCRIPT_ARGS",
+        default=None,
+        help="additional arguments to pass to minuimus.pl script",
+    )
     args = parser.parse_args()
 
     logger.info(f"Getting files with arguments: {args.files}, {args.filelist}")
@@ -159,7 +187,12 @@ def main():
     total_original_size = multiprocessing.Manager().Value("i", 0)
     total_compressed_size = multiprocessing.Manager().Value("i", 0)
 
-    file_processor = FileProcessor(total_original_size, total_compressed_size, processed_files, args.processed_files_file)
+    file_processor = FileProcessor(
+        total_original_size,
+        total_compressed_size,
+        processed_files,
+        args.processed_files_file,
+    )
 
     logger.info(f"Using {multiprocessing.cpu_count()} CPU cores for compression")
     with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
@@ -181,6 +214,7 @@ def main():
     logger.info(f"Number of files skipped: {len(files) - len(processed_files)}")
     logger.info("Compression process has finished")
     logger.info("Program has finished running")
+
 
 if __name__ == "__main__":
     main()
