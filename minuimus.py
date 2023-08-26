@@ -88,11 +88,12 @@ def get_files(args_files, file_list=None):
 
 
 class FileProcessor:
-    def __init__(self, total_original_size, total_compressed_size, processed_files):
+    def __init__(self, total_original_size, total_compressed_size, processed_files, processed_files_file):
         self.total_original_size = total_original_size
         self.total_compressed_size = total_compressed_size
         self.file_compressor = FileCompressor()
         self.processed_files = processed_files
+        self.processed_files_file = processed_files_file
 
     def process_file(self, file):
         try:
@@ -106,6 +107,9 @@ class FileProcessor:
             self.total_original_size.value += original_size
             self.total_compressed_size.value += compressed_size
             self.processed_files.add(file)
+            with open(self.processed_files_file, "wb") as f:
+                with contextlib.closing(f):
+                    pickle.dump(list(self.processed_files), f)
         except Exception as e:
             logger.exception(f"Error processing file: {file}. {e}")
 
@@ -155,7 +159,7 @@ def main():
     total_original_size = multiprocessing.Manager().Value("i", 0)
     total_compressed_size = multiprocessing.Manager().Value("i", 0)
 
-    file_processor = FileProcessor(total_original_size, total_compressed_size, processed_files)
+    file_processor = FileProcessor(total_original_size, total_compressed_size, processed_files, args.processed_files_file)
 
     logger.info(f"Using {multiprocessing.cpu_count()} CPU cores for compression")
     with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
