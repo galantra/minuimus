@@ -106,3 +106,5 @@ dmypy.json
 
 # Visual Studio Code files
 .vscode/
+.gpt-runner/
+*.review.md
