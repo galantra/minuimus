@@ -32,7 +32,7 @@ class FileCompressor:
             subprocess.run(
                 ["perl", "minuimus.pl", file],
                 check=True,
-                creationflags=subprocess.BELOW_NORMAL_PRIORITY_CLASS,
+                # creationflags=subprocess.BELOW_NORMAL_PRIORITY_CLASS,
             )
         except subprocess.CalledProcessError as e:
             logger.exception(f"Error compressing file: {file}. {e}")
@@ -139,8 +139,8 @@ def main():
     parser.add_argument('--processed-files-file', '-p', metavar='FILE',
                         default='processed_files.pkl',
                         help='file to store list of processed files')
-    parser.add_argument('--arg1', metavar='ARG1', default=None,
-                        help='argument 1 to pass to minuimus.pl script')
+    parser.add_argument('--script-args', metavar='SCRIPT_ARGS', default=None,
+                        help='additional arguments to pass to minuimus.pl script')
     args = parser.parse_args()
 
     logger.info(f"Getting files with arguments: {args.files}, {args.filelist}")
