@@ -12,19 +12,19 @@ import argparse
 import logging
 import datetime
 
-def setup_logger(name, log_file, level=logging.DEBUG):
+def setup_logger(log_file, level=logging.DEBUG):
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler = logging.FileHandler(log_file)
     file_handler.setLevel(level)
     file_handler.setFormatter(formatter)
-    logger = logging.getLogger(name)
+    logger = logging.getLogger(__name__)
     logger.setLevel(level)
     logger.addHandler(file_handler)
     return logger
 
 current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 log_filename = f"minuimus_{current_time}.log"
-logger = setup_logger(__name__, log_filename)
+logger = setup_logger(log_filename)
 
 class FileCompressor:
     def compress_file(self, file):
