@@ -143,8 +143,7 @@ class CompressionSummary:
             f"Total saved space: {saved_space_str} ({percent_saved_space:.2f}% compression ratio)"
         )
 
-
-def main():
+def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Compress files using minuimus.pl",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -173,7 +172,10 @@ def main():
         default=None,
         help="additional arguments to pass to minuimus.pl script",
     )
-    args = parser.parse_args()
+    return parser.parse_args()
+
+def main():
+    args = parse_arguments()
 
     logger.info(f"Getting files with arguments: {args.files}, {args.filelist}")
     files = get_files(args.files, args.filelist)
